@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "D:\Windows\Daten\TMP\Bachelorarbeit\V1_14082022\20220915Projekt_threading\main.py", line 7, in <module>
+    entryPoint.start()
+  File "D:\Windows\Daten\TMP\Bachelorarbeit\V1_14082022\20220915Projekt_threading\View\View.py", line 12, in start
+    self.__controller.runCalculation()
+  File "D:\Windows\Daten\TMP\Bachelorarbeit\V1_14082022\20220915Projekt_threading\Controller\Controller.py", line 79, in runCalculation
+    app_future.result() # wait for calc to finish
+  File "C:\Users\Jonas\AppData\Local\Programs\Python\Python310\lib\concurrent\futures\_base.py", line 446, in result
+    return self.__get_result()
+  File "C:\Users\Jonas\AppData\Local\Programs\Python\Python310\lib\concurrent\futures\_base.py", line 391, in __get_result
+    raise self._exception
+  File "C:\Users\Jonas\AppData\Local\Programs\Python\Python310\lib\concurrent\futures\thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "D:\Windows\Daten\TMP\Bachelorarbeit\V1_14082022\20220915Projekt_threading\Model\PipelineContainer.py", line 85, in run
+    stream.write(classResult)
+TypeError: write() argument must be str, not list

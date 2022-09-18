@@ -1,0 +1,17 @@
+[
+  {
+    "version" : "v1",
+    "className" : "click",
+    "scenario" : "2ae74a71-0272-4429-888c-593ea528fc6b",
+    "step" : "K53_22_2_Verschleiss",
+    "recordingId" : "1595e895-7842-475a-b31d-da30161f92d2",
+    "offsetNanos" : 4225651431,
+    "properties" : {
+      "scenario.description" : 14032021,
+      "scenario.version" : 1,
+      "step.name" : "K53_22_2_Verschleiss",
+      "step.type" : "GT 4pol",
+      "step.location" : "null"
+    }
+  }
+]
