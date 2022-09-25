@@ -1,6 +1,7 @@
 import csv
 import os
 import Datalayer.Datalayer as Datalayer
+from matplotlib.pyplot import close
 
 
 class DataWriteDO:
@@ -21,6 +22,7 @@ class DataWriteDO:
         self.__createDirs(config["fname"])
         config["fname"] = "\\".join([Datalayer.DatalayerInterface.pathEvalData, config["fname"]])
         figure.savefig(**config)
+        close(figure)
 
     def saveCSVData(self,path, header, data):
         if not os.path.exists(Datalayer.DatalayerInterface.pathEvalData):

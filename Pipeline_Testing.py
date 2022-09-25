@@ -42,7 +42,7 @@ if __name__=="__main__":
         StartElementVO(None, None),
         FrequencyAugmentationVO(None, useCache=useCache, valueRange=np.arange(5) / 5),
         PitchShiftVO(None, useCache=useCache, valueRange=[-6,0,6]),
-        NoiseInjectionVO(None, useCache=False, valueRange=np.arange(3)/3, noise=None, sr=None)
+        NoiseInjectionVO(None, useCache=False, valueRange=np.arange(4)/3, noise=None, sr=None)
     ]
 
     # Ausgeben Dummy Werte

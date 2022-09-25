@@ -31,7 +31,7 @@ class AudioLoadDO:
                                               direct))  # opens a stream/iterator which has to be closed ; This is faster than os.listdir
             # for audiofiles ; it is the basis of the analysis
             for audiofile in it:
-                if audiofile.name.endswith(".wav"): # if file xists
+                if audiofile.name.endswith(".wav"): # if file exists
                     file_found = False
                     uuid = audiofile.name.split("_")[0] # extract identifier for all files
 
