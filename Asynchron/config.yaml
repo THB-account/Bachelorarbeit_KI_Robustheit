@@ -1,0 +1,19 @@
+
+# Shifted den Frequenzbereich um n% nach Rechts
+pitchshiftPercents : "[0]"
+
+# Anzahl der Abschnitte für das Entfernen von Frequenzanteilen
+# 5 würde in [0,0.2,0.4,0.6,0.8] resultieren, wobei ein Intervall und der
+# nächsthöheren Nummer besteht e.g. (0-0) (0-0.2),(0.2-0.4)...(0.8-1) --> Schrittweite 1/n
+#20
+freqSteps : 8
+
+# noiseSteps ist die Anzahl der Elemente in dem Modifikationsarray
+# 5 würde [0,0.2,0.4,0.6,0.8,1] entsprechen --> Schrittweite: 1/n
+# 20
+noiseSteps : 8
+# Wie Stark das letztendlich überlagerte Geräusch am Ende sein soll
+# entspricht dem finalen Element der Liste --> [0,0.2,...,2]
+noiseAmplitude : 0.5
+
+                
