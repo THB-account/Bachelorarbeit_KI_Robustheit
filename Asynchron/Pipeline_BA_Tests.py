@@ -22,11 +22,14 @@ from scipy.ndimage import shift
 
 dummyAudio = False
 white_noise = True
+normalization = False
 
 # define realistisch parameters
-frequencyCutouts = np.arange(6)/5 # [0,0.2,0.4,0.6,0.8,1]
-pitchshiftPercents=[0]
-noisePercents =  np.arange(6)/5 # [0,0.2,0.4,0.6,0.8,1]
+freq = 8
+noise = 10
+frequencyCutouts = np.arange(freq+1)/(freq if freq!= 0 else 1) # [0,0.2,0.4,0.6,0.8,1]
+pitchshiftPercents=[-1,0,1]
+noisePercents =  np.arange(noise+1)/(noise if noise!= 0 else 1) # [0,0.2,0.4,0.6,0.8,1]
 
 # Load Audio extracted Audio
 dli= Datalayer.Datalayer.DatalayerInterface()
@@ -58,14 +61,14 @@ pEl = [
             Model.Pipeline.PitchShiftVO(nextPipeElement=None, useCache=True, valueRange=pitchshiftPercents),
             Model.Pipeline.NoiseInjectionVO(nextPipeElement=None, useCache=False,
                              valueRange=noisePercents,
-                             noise=None, sr=None),
+                             noise=None, sr=None, normalization=normalization),
             Model.Pipeline.AudioTyping(nextPipeElement=None, useCache=False)
         ]
 
 pEl[3].sr = 44100
 pEl[3].noise = noiseAudio
 
-
+# --------------------------------------------------------------------------------------------------------------------
 # Plot the original Signal, for Analysis
 fig1 = plt.figure(figsize=(10,8))
 fig1.tight_layout(pad=40.0)
@@ -115,12 +118,14 @@ plt.show()
 plt.close(fig1)
 plt.close(fig2)
 
-
-for pipePiece in pEl[3:3]:
+# --------------------------------------------------------------------------------------------------------------------
+# plot modified Audio for pipeline segments
+for pipePiece in pEl[2:2]:
+    temp = []
     for _ in range(len(pipePiece.valueRange)):
         modAudio = pipePiece.process(baseAudio,sr)
 
-        fig = plt.figure(figsize=(10,8))
+        fig = plt.figure(2,figsize=(10,8))
         fig.suptitle(pipePiece.dimName + "  " + str(pipePiece.actualValue))
 
         ax = fig.add_subplot(211)
@@ -129,31 +134,41 @@ for pipePiece in pEl[3:3]:
 
         ax = fig.add_subplot(212)
         x, y = fft_display(modAudio, sr)
+        temp.append(y)
         ax.xaxis.set_major_locator(ticker.IndexLocator(base=2205, offset=.0))
         plt.plot(x,y)
 
         plt.show()
         plt.close(fig)
         print(pipePiece.increment())
+    plt.figure(figsize=(10,8))
+    for i,x in enumerate(temp):
+        plt.plot(x,label=pipePiece.valueRange[i])
+    plt.legend()
+    plt.title("Alle Veränderungen einer Dimension im Vergleich")
+    plt.show()
+    plt.close()
 
 # check whether casting of elements work
-tempAudio = baseAudio.astype(np.int32) * 2
+tempAudio = baseAudio.astype(np.int32)
+if tempAudio.max() <= 32767:
+    tempAudio = tempAudio * 32767 / tempAudio.max() * 2
+
+
 fig = plt.figure()
 ax = fig.add_subplot(311)
 plt.plot(tempAudio)
-ax.yaxis.set_major_locator(ticker.IndexLocator(base=5000, offset=.0))
 plt.title("Signal, das außerhalb vom Wertebereich liegt [-32767,32767]")
 
 ax = fig.add_subplot(312)
-plt.plot(pEl[4].process(tempAudio, sr))
-ax.yaxis.set_major_locator(ticker.IndexLocator(base=5000, offset=.0))
-plt.title("angepasstes Signal, was in [-32767,32767] liegt")
+temp = pEl[4].process(tempAudio, sr)
+plt.plot(temp)
+plt.title(f"angepasstes Signal, was in [-32767,32767] liegt, Maximum: {temp.max()}")
 
 ax = fig.add_subplot(313)
 plt.plot(tempAudio, label="zu großes Signal")
 plt.plot(pEl[4].process(tempAudio, sr), label="normiertes angepasstes Signal")
 
-ax.yaxis.set_major_locator(ticker.IndexLocator(base=5000, offset=.0))
 plt.legend()
 plt.title("Vergleich beider Signale")
 plt.show()
@@ -205,7 +220,7 @@ plt.close(fig)
 
 
 # test normalization of input signal
-container = Model.PipelineContainer.PipelineContainerVO([None],None,None)
+container = Model.PipelineContainer.PipelineContainerVO([None],None,None,normalization=normalization)
 normValue = container.calcNormalization(list(baseCopy.values())[0])
 print(normValue)
 

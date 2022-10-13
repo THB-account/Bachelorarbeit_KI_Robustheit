@@ -56,9 +56,9 @@ a           X (X
 keine Eingabe X (X)
 -1          X (X)
 0           Y (Y)
-1.1           Y (Y)
+1.1         Y (Y)
 a           X (X
-01.1          Y (Y)
--01.1         X (X)
+01.1        Y (Y)
+-01.1       X (X)
 """
 

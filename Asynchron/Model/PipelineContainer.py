@@ -14,12 +14,13 @@ import asyncio
 
 class PipelineContainerVO:
 
-    def __init__(self, PipelineElements, outqueue, inqueue):
+    def __init__(self, PipelineElements, outqueue, inqueue, normalization=False):
         self.__dataLayerInterface = DatalayerInterface()
         self.__evalCollection = EvaluationCollection()
         self.__classOutQueue = outqueue # puts job into this
         self.__classInQueue = inqueue   # gets result from this
         self.__intervalWidth = 2 # private attribute, that
+        self.__normalization = normalization
 
         it = iter(PipelineElements)
         self.__PipelineHead = next(it)
@@ -59,17 +60,16 @@ class PipelineContainerVO:
         # get samplingRate for later evaluation
         localSamplingRate = list( list(baseAudio.values())[0] .values())[0]["audio"].samplingRate # sampling Rate for comparison
         numberOffsets = list( list(baseAudio.values())[0] .values())[0]["label"].numberOffsets # for calculating size of prediction space
-
         shape = self.__PipelineHead.shape
 
-
-
         # calculate normalization value
-        normalizationValue = self.calcNormalization(list(baseAudio.values())[0])
-        backgroundTasks = set() # track tasks, so none of the are collected by garbage collector
+        if self.__normalization:
+            normalizationValue = self.calcNormalization(list(baseAudio.values())[0])
+
+        # track tasks, so none of the are collected by garbage collector and can be tracked for termination
+        backgroundTasks = set()
 
         for direct_noise in tqdm(noiseAudio,desc="Noiseklassen", position=0):
-            # TODO Überarbeiten, so dass für alle Iterationen Arrays erstellt werden
             # at the moment only one base audio set is loaded
             predictionSpace = PredictionSpaceContainerVO(n=len(noiseAudio[direct_noise])*len(list(baseAudio.values())[0])* numberOffsets
                                                    ,shape=tuple(shape)
@@ -99,9 +99,10 @@ class PipelineContainerVO:
                         self.__PipelineHead.valueCache = baseAudio[direct_audio][uuid_audio]["audio"].\
                             extractAudiorange(offset,self.__intervalWidth)
                         # normalize audio input to calculated maximum ; audio * normVal/max(abs(audioudio))
-                        self.__PipelineHead.valueCache = self.__PipelineHead.valueCache\
-                                                         * normalizationValue/ \
-                                                         (np.absolute(self.__PipelineHead.valueCache).max())
+                        if self.__normalization:
+                            self.__PipelineHead.valueCache = self.__PipelineHead.valueCache\
+                                                             * normalizationValue/ \
+                                                             (np.absolute(self.__PipelineHead.valueCache).max())
                         # set correlation for noise
                         noiseInjectionTO.calcCorr(self.__PipelineHead.valueCache)
                         # Accelerometerdaten für Verarbeitung
@@ -216,3 +217,15 @@ class PipelineContainerVO:
     @property
     def classInQueue(self):
         return self.__classInQueue
+
+    @property
+    def normalization(self):
+        return self.__normalization
+
+    @property
+    def intervalWidth(self):
+        return self.__intervalWidth
+
+    @normalization.setter
+    def normalization(self, normalization):
+        self.__normalization = normalization

@@ -196,6 +196,7 @@ class AudioTransferObject(BaseTransferObject):
         audio = audio[ max(int(_offset - sr*seconds/2),0):min(int(_offset + sr*seconds/2),len(audio))]
 
         if len(audio) < sr*seconds:
+            # if the audio is less than required, pad with zeros
             missingAudio =  int(sr*seconds) - len(audio)
             audio = append(audio, zeros(floor(missingAudio/2)))
             audio = append(zeros(ceil(missingAudio/2)), audio)

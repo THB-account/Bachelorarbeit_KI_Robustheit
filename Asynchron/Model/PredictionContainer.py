@@ -1,6 +1,10 @@
 import Model.Statistics
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
+
+# for type comparison
+from Model.Pipeline import FrequencyAugmentationVO
 
 
 class EvaluationCollection:
@@ -51,8 +55,8 @@ class EvaluationCollection:
                 plt.hist(noiseClass, bins='fd', alpha=0.75, label=names[i])
 
             plt.grid(True)
-            plt.title(titles[0])
-            plt.ylabel("Häufigkeit #")
+            plt.title("Häufigkeitsverteilung des " + titles[0] + " der Störgeräuschsklassen")
+            plt.ylabel("Häufigkeit der Fehler #")
             plt.xlabel("berechneter " + titles[0])
             plt.legend()
             # save to file and close figure
@@ -170,7 +174,6 @@ class PredictionSpaceContainerVO:
         if len(self.__dims) == 2:
             pass
         elif len(self.__dims) == 3:
-            temp = -1
             # check whether object is instance of pitch shift or if that is false if there are less than 3 dimensions
             # TODO Figure out Error, why isinstance not working and replace hard coding
             # Following doesnt work, most likely due to import paths
@@ -239,40 +242,76 @@ class EvaluationSpaceVO:
                  mean_surf, std_surf, statRange_surf):
         self.__datalayerInterface = datalayerInterface
         self.__name = name
-        self.__dims = dims
         self.__dimNames = dimNames
         self.__dimTypes = dimTypes
         self.__samplingRate = samplingRate
+        self.__dims = dims
+        # for getting absolute frequency values ; string comparison instead of type due to import paths
+        # messing isinstance comparisons up
+        i = next((i for i, x in enumerate(self.__dimTypes) if str(x) == str(FrequencyAugmentationVO)))
+        self.__dims[i] = [x*self.__samplingRate/2 for x in self.__dims[i]]
+
         # statistics
         self.__stats = {}
-        title = "Konfidenz einer ok-Bewertung"
-        self.__stats["mean"] =  Model.Statistics.BaseStatVO(value=mean, evaluationSpace=self
-                                                            , title=f"Durchschnittliche {title}", fileName="mean")
-        self.__stats["std"] =   Model.Statistics.BaseStatVO(value=std, evaluationSpace=self
-                                                            , title=f"Standardabweichung der {title}", fileName="std")
-        self.__stats["range"] = Model.Statistics.BaseStatVO(value=statRange, evaluationSpace=self
-                                                            , title=f"Spannreichweite der {title}", fileName="range")
+        # create colormaps for usage
+        self.__cmaps = {}
+        colors = ["black", "red", "yellow"]
+        self.__cmaps["less_hot"] = LinearSegmentedColormap.from_list('less_hot', colors, N=256)
+        self.__cmaps["iless_hot"] = LinearSegmentedColormap.from_list('iless_hot', list(reversed(colors)), N=256)
+        colors += ["white"]
+        self.__cmaps["hot"] = LinearSegmentedColormap.from_list('hot', colors, N=256)
+        self.__cmaps["ihot"] = LinearSegmentedColormap.from_list('ihot', list(reversed(colors)), N=256)
+        self.__color = self.__cmaps["ihot"]
 
+        title = "Konfidenz einer ok-Bewertung"
+        # mean, std, range
+        self.__stats["mean"] = Model.Statistics.BaseStatVO(value=mean, evaluationSpace=self
+                                                                      , title=f"Durchschnittliche {title}",
+                                                                      fileName="mean"
+                                                                      , subfolder="mean")
+        self.__stats["std"] = Model.Statistics.BaseStatVO(value=std, evaluationSpace=self
+                                                                     , title=f"Standardabweichung der {title}",
+                                                                     fileName="std"
+                                                                     , subfolder="std")
+        self.__stats["range"] = Model.Statistics.BaseStatVO(value=statRange, evaluationSpace=self
+                                                                       , title=f"Spannreichweite der {title}",
+                                                                       fileName="range"
+                                                                       , subfolder="range")
+        # split into multiple diagrams
+        self.__stats["mean_split"] =  Model.Statistics.BasePitchStatVO(value=mean, evaluationSpace=self
+                                                            , title=f"Durchschnittliche {title}", fileName="mean_split"
+                                                            ,subfolder="mean")
+        self.__stats["std_split"] =   Model.Statistics.BasePitchStatVO(value=std, evaluationSpace=self
+                                                            , title=f"Standardabweichung der {title}", fileName="std_split"
+                                                            ,subfolder="std")
+        self.__stats["range_split"] = Model.Statistics.BasePitchStatVO(value=statRange, evaluationSpace=self
+                                                            , title=f"Spannreichweite der {title}", fileName="range_split"
+                                                            ,subfolder="range")
+
+        self.__stats["mean_cont"] = Model.Statistics.ContourPitchStatVO(value=mean, evaluationSpace=self
+                                                           , title=f"Durchschnittliche {title}", fileName="mean_cont"
+                                                                        ,subfolder="mean")
+        self.__stats["std_cont"] = Model.Statistics.ContourPitchStatVO(value=std, evaluationSpace=self
+                                                          , title=f"Standardabweichung der {title}", fileName="std_cont"
+                                                                       ,subfolder="std")
+        self.__stats["range_cont"] = Model.Statistics.ContourPitchStatVO(value=statRange, evaluationSpace=self
+                                                            , title=f"Spannreichweite der {title}", fileName="range_cont"
+                                                                         ,subfolder="range")
+
+        # error
         self.__stats["SSE"] =   Model.Statistics.ErrorStatVO(value=SSE, evaluationSpace=self
                                                              , title="Sum Squared Error der Bewertungen", fileName="Sum_Squared_Error")
         self.__stats["MSE"] =   Model.Statistics.ErrorStatVO(value=MSE, evaluationSpace=self
                                                              , title="Mean Squared Error der Bewertungen", fileName="Mean_Squared_Error")
         self.__stats["AE"] =    Model.Statistics.ErrorStatVO(value=AE, evaluationSpace=self
                                                              , title="Absolute Error der Bewertungen", fileName="Absolute Error")
-
-        self.__stats["mean_surf"] =  Model.Statistics.SurfaceStatVO(value=mean_surf, evaluationSpace=self
-                                                                    , title=f"Durchschnittliche {title}", fileName="mean_surf")
-        self.__stats["std_surf"] =  Model.Statistics.SurfaceStatVO(value=std_surf, evaluationSpace=self
-                                                                   , title=f"Standardabweichung der {title}", fileName="std_surf")
-        self.__stats["statRange_surf"] =  Model.Statistics.SurfaceStatVO(value=statRange_surf, evaluationSpace=self
-                                                                         , title=f"Spannreichweite der {title}", fileName="statRange_surf")
-
-        self.__stats["mean_cont"] = Model.Statistics.ContourStatVO(mean_surf, evaluationSpace=self
-                                                                   , title=f"Durchschnittliche {title}", fileName="mean_cont")
-        self.__stats["std_cont"] = Model.Statistics.ContourStatVO(std_surf, evaluationSpace=self
-                                                                  , title=f"Standardabweichung der {title}", fileName="std_cont")
-        self.__stats["statRange_cont"] = Model.Statistics.ContourStatVO(statRange_surf, evaluationSpace=self
-                                                                        , title=f"Spannreichweite der {title}", fileName="statRange_cont")
+        # contour plots with dimensionality reduction
+        self.__stats["mean_cont_dr"] = Model.Statistics.ContourStatVO(mean_surf, evaluationSpace=self
+                                                                   , title=f"Durchschnittliche {title}", fileName="mean_cont_dr")
+        self.__stats["std_cont_dr"] = Model.Statistics.ContourStatVO(std_surf, evaluationSpace=self
+                                                                  , title=f"Standardabweichung der {title}", fileName="std_cont_dr")
+        self.__stats["statRange_cont_dr"] = Model.Statistics.ContourStatVO(statRange_surf, evaluationSpace=self
+                                                                        , title=f"Spannreichweite der {title}", fileName="statRange_cont_dr")
 
     # own methods
     def save(self):
@@ -309,4 +348,12 @@ class EvaluationSpaceVO:
     @property
     def stats(self):
         return self.__stats
+
+    @property
+    def cmaps(self):
+        return self.__cmaps
+
+    @property
+    def color(self):
+        return self.__color
 

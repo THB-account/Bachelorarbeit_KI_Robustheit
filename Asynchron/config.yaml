@@ -1,19 +1,34 @@
 
+# Wenn die Aufnahmen im Ordner "Basisgerausche" auf deren durchschnittliches Maximum normalisiert werden sollen auf True
+# setzen, ansonsten auf False setzen
+basisaudioNormalisierung : True
+
+# Wenn die Störgeräusche im Ordner "Stoergerauschen" im Verhältnis zum Basisgerausch normalisiert werden sollen auf True
+# setzen, ansonsten auf False setzen
+# Berechnungsformel: verarbeitetes Signal = RMS(Basisgerausch)/RMS(Noise) * Noise * stellwert[i] + Basisgerausch
+# wobei Signal Noise Ratio = RMS(Basisgerausch)/RMS(Noise)
+# durch RMS(Basisgerausch)/RMS(Noise) * Noise ist Noise auf die Energie des Signals normalisiert 
+noiseNormalisierung : True
+
+                
 # Shifted den Frequenzbereich um n% nach Rechts
-pitchshiftPercents : "[0]"
+# muss 0 als Wert enthalten für Fehlerberechnung
+pitchshiftProzente : "[-1,0,1]"
+
 
 # Anzahl der Abschnitte für das Entfernen von Frequenzanteilen
 # 5 würde in [0,0.2,0.4,0.6,0.8] resultieren, wobei ein Intervall und der
-# nächsthöheren Nummer besteht e.g. (0-0) (0-0.2),(0.2-0.4)...(0.8-1) --> Schrittweite 1/n
-#20
-freqSteps : 8
+# nächsthöheren Nummer besteht e.g. (0-0.2),(0.2-0.4)...(0.8-1)
+# 0 ist ein valider Wert und diese Dimension wird in der Modifikation von Aufnahmen nicht berücksichtigt
+frequenzSchritte : 8
 
 # noiseSteps ist die Anzahl der Elemente in dem Modifikationsarray
 # 5 würde [0,0.2,0.4,0.6,0.8,1] entsprechen --> Schrittweite: 1/n
-# 20
-noiseSteps : 8
+# 0 ist ein valider Wert und diese Dimension wird in der Modifikation von Aufnahmen nicht berücksichtigt
+noiseSteps : 10
 # Wie Stark das letztendlich überlagerte Geräusch am Ende sein soll
 # entspricht dem finalen Element der Liste --> [0,0.2,...,2]
-noiseAmplitude : 0.5
+# 0 ist ein valider Wert und diese Dimension wird in der Modifikation von Aufnahmen nicht berücksichtigt
+noiseAmplitude : 1
 
                 

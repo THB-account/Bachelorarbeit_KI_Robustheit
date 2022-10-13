@@ -346,7 +346,8 @@ class FrequencyAugmentationVO(PipelineElementVO):
 
 
 class NoiseInjectionVO(PipelineElementVO):
-    def __init__(self, nextPipeElement=None, useCache=False, valueRange=[0], noise=None, sr=None, dtype=np.int32):
+    def __init__(self, nextPipeElement=None, useCache=False, valueRange=[0], noise=None, sr=None, dtype=np.int32
+                 , normalization=False):
         PipelineElementVO.__init__(self, nextPipeElement, useCache, dtype=dtype
                                    , dimName="Störgeräuschsüberlagerung in % des Steckgeräuschs")
         # initialize Range
@@ -355,6 +356,7 @@ class NoiseInjectionVO(PipelineElementVO):
         self.noise = noise
         self.__sr = sr
         self.__corrShift = 0
+        self.__normalization = normalization
 
     def process(self, element, sr):
         if self._useCache and self._valueCache is not None:
@@ -362,10 +364,16 @@ class NoiseInjectionVO(PipelineElementVO):
                 self._valueCache,sr) if self._nextPipeElement != None else self._valueCache
 
         dtype = np.single
-        # result = signal noise ratio * scaling value * shifted noise + signal
-        result = (rms(element.astype(dtype, copy=False))/rms(self.__noise.astype(dtype, copy=False))) \
-                 * float(self.__valueRange[self.__valueCounter]) * shift(self.__noise, self.__corrShift).astype(dtype) \
-                 + element.astype(dtype,copy=False)
+        if self.__normalization:
+            # result = signal noise ratio * scaling value * shifted noise + signal
+            result = (rms(element.astype(dtype, copy=False))/rms(self.__noise.astype(dtype, copy=False))) \
+                     * float(self.__valueRange[self.__valueCounter]) * shift(self.__noise, self.__corrShift).astype(dtype) \
+                     + element.astype(dtype,copy=False)
+        else:
+            result = float(self.__valueRange[self.__valueCounter]) * shift(self.__noise, self.__corrShift).astype(dtype) \
+                     + element.astype(dtype,copy=False)
+
+
         result = result.astype(self._dtype)
         if self._useCache:
             self._valueCache = result
@@ -426,6 +434,10 @@ class NoiseInjectionVO(PipelineElementVO):
     def corrShift(self):
         return self.__corrShift
 
+    @property
+    def normalization(self):
+        return self.__normalization
+
     @valueRange.setter
     def valueRange(self, valueRange):
         self.reset()
@@ -436,10 +448,13 @@ class NoiseInjectionVO(PipelineElementVO):
         self.reset()
         self.__noise =  np.array(noise, dtype=self._dtype) if noise is not None else None
 
-
     @sr.setter
     def sr(self, sr):
         self.__sr = sr
+
+    @normalization.setter
+    def normalization(self, normalization):
+        self.__normalization = normalization
 
     def __str__(self):
         return "[{0}\n, valueCounter: {1} , valueRange: {2}, samplingRate: {3}, noise: {4} ]". \
