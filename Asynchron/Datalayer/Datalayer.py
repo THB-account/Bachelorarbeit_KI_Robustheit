@@ -24,5 +24,8 @@ class DatalayerInterface:
     def saveCSVData(self, path, header, data):
         self.__dataWriteDO.saveCSVData(path, header, data)
 
+    def savePredictions(self, predictions, config):
+        self.__dataWriteDO.savePredictions(predictions, config)
+
 
 

@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 
 # for type comparison
-from Model.Pipeline import FrequencyAugmentationVO
+from Model.Pipeline import FrequencyAugmentationVO,PitchShiftVO
 
 
 class EvaluationCollection:
@@ -24,7 +24,7 @@ class EvaluationCollection:
     def save(self):
         for space in self.__container:
             space.save()
-        # TODO Vergleich verschiedener Spaces implementieren
+
         """
         1. Hole DatalayerInterface von der ersten Klasse
         2. Hole Daten von den drei Klassen
@@ -33,33 +33,55 @@ class EvaluationCollection:
         datalayerInterface = self.__container[0].datalayerInterface # for later stirage
         saveConfig = self.__container[0].stats["MSE"].saveConfig.copy() # basic saveconfig for surface diagram
         tempContainer = [[],[],[]]
-        titles=[
+        statTitles=[
             self.__container[0].stats["MSE"].title, # just so that the title fits into the general name scheme
             self.__container[0].stats["SSE"].title,
             self.__container[0].stats["AE"].title
         ]
 
 
-        names = [] # Names of noise class
-        for i,evaluationSpace in enumerate(self.__container): # extract values from classes
-            names.append(evaluationSpace.name)
-            tempContainer[0].append( evaluationSpace.stats["MSE"].value)
+        noiseNames = [] # Names of noise class
+        for evaluationSpace in self.__container: # extract values from classes
+            noiseNames.append(evaluationSpace.name)
+            tempContainer[0].append(evaluationSpace.stats["MSE"].value)
             tempContainer[1].append(evaluationSpace.stats["SSE"].value)
             tempContainer[2].append(evaluationSpace.stats["AE"].value)
 
-        # MSE
-        for i in range(len(titles)):
-            saveConfig["fname"] = ''.join([titles[i],".png"])
+        for i in range(len(statTitles)):
+            noiseData = [noiseClass for noiseClass in tempContainer[i]]
+
+            """
+            saveConfig["fname"] = ''.join([statTitles[i],".png"])
             fig = plt.figure(figsize=(10, 8))
-            for i,noiseClass in enumerate(tempContainer[0]):
-                plt.hist(noiseClass, bins='fd', alpha=0.75, label=names[i])
+            #for j,noiseClass in enumerate(tempContainer[i]):
+            plt.hist( noiseData
+                     , bins='fd', alpha=0.75
+                     , label=noiseNames, stacked=True)
 
             plt.grid(True)
-            plt.title("Häufigkeitsverteilung des " + titles[0] + " der Störgeräuschsklassen")
+            plt.title("Häufigkeitsverteilung des " + statTitles[0] + " der Störgeräuschsklassen")
             plt.ylabel("Häufigkeit der Fehler #")
-            plt.xlabel("berechneter " + titles[0])
+            plt.xlabel("berechneter " + statTitles[0])
             plt.legend()
             # save to file and close figure
+            datalayerInterface.saveFigure(fig, config=saveConfig)
+            """
+            saveConfig["fname"] = ''.join([statTitles[i], "_boxplot.png"])
+            fig = plt.figure(figsize=(10, 8))
+            plt.boxplot(noiseData, labels=noiseNames)
+            plt.title("Häufigkeitsverteilungen des " + statTitles[i] + " der Störgeräuschsklassen")
+            plt.ylabel("berechneter " + statTitles[0])
+            plt.xlabel("Fehlerklasse")
+            datalayerInterface.saveFigure(fig, config=saveConfig)
+
+
+            saveConfig["fname"] = ''.join([statTitles[i], "_violinplot.png"])
+            fig = plt.figure(figsize=(10, 8))
+            plt.violinplot(noiseData)
+            plt.xticks([i for i in range(1,len(noiseNames)+1)], noiseNames)
+            plt.title("Häufigkeitsverteilungen des " + statTitles[i] + " der Störgeräuschsklassen")
+            plt.ylabel("berechneter " + statTitles[0])
+            plt.xlabel("Fehlerklasse")
             datalayerInterface.saveFigure(fig, config=saveConfig)
 
     # getter and setter
@@ -277,26 +299,6 @@ class EvaluationSpaceVO:
                                                                        , title=f"Spannreichweite der {title}",
                                                                        fileName="range"
                                                                        , subfolder="range")
-        # split into multiple diagrams
-        self.__stats["mean_split"] =  Model.Statistics.BasePitchStatVO(value=mean, evaluationSpace=self
-                                                            , title=f"Durchschnittliche {title}", fileName="mean_split"
-                                                            ,subfolder="mean")
-        self.__stats["std_split"] =   Model.Statistics.BasePitchStatVO(value=std, evaluationSpace=self
-                                                            , title=f"Standardabweichung der {title}", fileName="std_split"
-                                                            ,subfolder="std")
-        self.__stats["range_split"] = Model.Statistics.BasePitchStatVO(value=statRange, evaluationSpace=self
-                                                            , title=f"Spannreichweite der {title}", fileName="range_split"
-                                                            ,subfolder="range")
-
-        self.__stats["mean_cont"] = Model.Statistics.ContourPitchStatVO(value=mean, evaluationSpace=self
-                                                           , title=f"Durchschnittliche {title}", fileName="mean_cont"
-                                                                        ,subfolder="mean")
-        self.__stats["std_cont"] = Model.Statistics.ContourPitchStatVO(value=std, evaluationSpace=self
-                                                          , title=f"Standardabweichung der {title}", fileName="std_cont"
-                                                                       ,subfolder="std")
-        self.__stats["range_cont"] = Model.Statistics.ContourPitchStatVO(value=statRange, evaluationSpace=self
-                                                            , title=f"Spannreichweite der {title}", fileName="range_cont"
-                                                                         ,subfolder="range")
 
         # error
         self.__stats["SSE"] =   Model.Statistics.ErrorStatVO(value=SSE, evaluationSpace=self
@@ -305,13 +307,51 @@ class EvaluationSpaceVO:
                                                              , title="Mean Squared Error der Bewertungen", fileName="Mean_Squared_Error")
         self.__stats["AE"] =    Model.Statistics.ErrorStatVO(value=AE, evaluationSpace=self
                                                              , title="Absolute Error der Bewertungen", fileName="Absolute Error")
-        # contour plots with dimensionality reduction
-        self.__stats["mean_cont_dr"] = Model.Statistics.ContourStatVO(mean_surf, evaluationSpace=self
-                                                                   , title=f"Durchschnittliche {title}", fileName="mean_cont_dr")
-        self.__stats["std_cont_dr"] = Model.Statistics.ContourStatVO(std_surf, evaluationSpace=self
-                                                                  , title=f"Standardabweichung der {title}", fileName="std_cont_dr")
-        self.__stats["statRange_cont_dr"] = Model.Statistics.ContourStatVO(statRange_surf, evaluationSpace=self
-                                                                        , title=f"Spannreichweite der {title}", fileName="statRange_cont_dr")
+
+        # split into multiple diagrams
+        self.__stats["mean_split"] = Model.Statistics.BasePitchStatVO(value=mean, evaluationSpace=self
+                                                                      , title=f"Durchschnittliche {title}",
+                                                                      fileName="mean_split"
+                                                                      , subfolder="mean")
+        self.__stats["std_split"] = Model.Statistics.BasePitchStatVO(value=std, evaluationSpace=self
+                                                                     , title=f"Standardabweichung der {title}",
+                                                                     fileName="std_split"
+                                                                     , subfolder="std")
+        self.__stats["range_split"] = Model.Statistics.BasePitchStatVO(value=statRange, evaluationSpace=self
+                                                                       , title=f"Spannreichweite der {title}",
+                                                                       fileName="range_split"
+                                                                       , subfolder="range")
+        # check whether range dimensions fit criteria for creating contour plot
+        # that being, that dims are atleast (2,2) ; (FrequencyAugmentation, NoiseInjection)
+        pitchIndex = next((i for i, x in enumerate(self.__dimTypes) if str(x) == str(PitchShiftVO)))
+        dimCheck = True
+        # due to pitch-shift being removed from the visualization
+        # the rest dimensions need to be atleast of size 2
+        for x in (self.__dims[:pitchIndex] + self.__dims[pitchIndex+1:]):
+            if len(x) < 2: # if size of dim less than two check failed
+                dimCheck = False
+                break
+        if dimCheck:
+            self.__stats["mean_cont"] = Model.Statistics.ContourPitchStatVO(value=mean, evaluationSpace=self
+                                                                            , title=f"Durchschnittliche {title}",
+                                                                            fileName="mean_cont"
+                                                                            , subfolder="mean")
+            self.__stats["std_cont"] = Model.Statistics.ContourPitchStatVO(value=std, evaluationSpace=self
+                                                                           , title=f"Standardabweichung der {title}",
+                                                                           fileName="std_cont"
+                                                                           , subfolder="std")
+            self.__stats["range_cont"] = Model.Statistics.ContourPitchStatVO(value=statRange, evaluationSpace=self
+                                                                             , title=f"Spannreichweite der {title}",
+                                                                             fileName="range_cont"
+                                                                             , subfolder="range")
+
+            # contour plots with dimensionality reduction
+            self.__stats["mean_cont_dr"] = Model.Statistics.ContourStatVO(mean_surf, evaluationSpace=self
+                                                                       , title=f"Durchschnittliche {title}", fileName="mean_cont_dr")
+            self.__stats["std_cont_dr"] = Model.Statistics.ContourStatVO(std_surf, evaluationSpace=self
+                                                                      , title=f"Standardabweichung der {title}", fileName="std_cont_dr")
+            self.__stats["statRange_cont_dr"] = Model.Statistics.ContourStatVO(statRange_surf, evaluationSpace=self
+                                                                            , title=f"Spannreichweite der {title}", fileName="statRange_cont_dr")
 
     # own methods
     def save(self):

@@ -15,6 +15,8 @@ import grpc
 import GrpcKommunikation.classifications_manager_pb2_grpc as classifications_manager_pb2_grpc
 import GrpcKommunikation.logging_collector_pb2_grpc as logging_collector_pb2_grpc
 import GrpcKommunikation.Services as Services
+# for error control
+import logging
 
 class PipelineController:
 
@@ -30,7 +32,6 @@ class PipelineController:
             Services.ClassificationManager(classOutQueue,classInQueue), self.__server)
         logging_collector_pb2_grpc.add_LoggingCollectorServicer_to_server(Services.LoggingCollector(),
                                                                  self.__server)
-
         self.__server.add_insecure_port('[::]:5001')
         
 
@@ -56,7 +57,7 @@ noiseNormalisierung : False
 pitchshiftProzente : "[-1,0,1]"
 
 # Anzahl der Abschnitte für das Entfernen von Frequenzanteilen
-# 5 würde in [0,0.2,0.4,0.6,0.8] resultieren, wobei ein Intervall und der
+# 5 würde in [0,0.2,0.4,0.6,0.8,1] resultieren, wobei ein Intervall und der
 # nächsthöheren Nummer besteht e.g. (0-0.2),(0.2-0.4)...(0.8-1)
 # 0 ist ein valider Wert und diese Dimension wird in der Modifikation von Aufnahmen nicht berücksichtigt
 frequenzSchritte : 5
@@ -119,7 +120,10 @@ noiseAmplitude : 1
         confData["pitchshiftProzente"] = sorted(list(set(confData["pitchshiftProzente"])))
         # cast to integer, to prevent passing of strings
 
-        frequencyCutouts = arange(confData["frequenzSchritte"]+1)/confData["frequenzSchritte"]
+        if confData["frequenzSchritte"] > 0:
+            frequencyCutouts = arange(confData["frequenzSchritte"]+1)/confData["frequenzSchritte"]
+        else:
+            frequencyCutouts = arange(1)
         if confData["noiseAmplitude"]!=0 and confData["noiseSteps"] >0: # no division of zero
             noisePercents = arange(confData["noiseSteps"]+1) / confData["noiseSteps"]*confData["noiseAmplitude"]
         else:

@@ -82,7 +82,7 @@ class BaseStatVO(StatNumberVO):
         ax.set_xlabel(axisNames[0], wrap=True, fontsize=12)
         ax.set_ylabel(axisNames[1], wrap=True, fontsize=12)
         ax.set_zlabel(axisNames[2], wrap=True, fontsize=12)
-        cbar = fig.colorbar(img, pad=0.09, extend='max', shrink=0.5, aspect=5)
+        cbar = fig.colorbar(img, pad=0.09, shrink=0.5, aspect=5)
         # set ticks again so all ticks will be displayed
         cbarTicks = cbar.get_ticks()
         cbar.set_ticks(cbarTicks)
@@ -134,7 +134,7 @@ class BasePitchStatVO(StatNumberVO):
             ax.set_xlabel(axisNames[0], wrap=True, fontsize=12)
             ax.set_ylabel(axisNames[1], wrap=True, fontsize=12)
             ax.set_zlabel(axisNames[2], wrap=True, fontsize=12)
-            cbar = fig.colorbar(img, pad=0.09, extend='max', shrink=0.5, aspect=5)
+            cbar = fig.colorbar(img, pad=0.09, shrink=0.5, aspect=5)
             # set ticks again so all ticks will be displayed
             cbarTicks = cbar.get_ticks()
             cbar.set_ticks(cbarTicks)
@@ -206,7 +206,7 @@ class ContourPitchStatVO(StatNumberVO):
             quadcontourset = ax.contourf(y, x, z, level_boundaries, vmin=vmin, vmax=vmax, cmap=cmap,antialiased=False)
 
             # Add a color bar which maps values to colors.
-            cbar = fig.colorbar(quadcontourset, pad=0.09, extend='max', shrink=0.5, aspect=5)
+            cbar = fig.colorbar(quadcontourset, pad=0.09, shrink=0.5, aspect=5)
             cbar.set_label("Konfidenz einer ok-Bewertung der KI", rotation=270, labelpad=10.0, fontsize=11)
 
             fig.suptitle(self._title, fontsize=14)
@@ -294,7 +294,7 @@ class SurfaceStatVO(StatNumberVO):
         ax.set_zlim(0, 1.1)
 
         # Add a color bar which maps values to colors.
-        cbar = fig.colorbar(surf, pad=0.09, extend='max', shrink=0.5, aspect=5)
+        cbar = fig.colorbar(surf, pad=0.09, shrink=0.5, aspect=5)
         # set ticks again so that all values will be displayed
         cbarTicks = cbar.get_ticks()
         cbar.set_ticks(cbarTicks)
@@ -359,7 +359,7 @@ class ContourStatVO(StatNumberVO):
         quadcontourset = ax.contourf(y, x, z, level_boundaries, vmin=vmin, vmax=vmax, cmap=cmap,antialiased=False)
 
         # Add a color bar which maps values to colors.
-        cbar = fig.colorbar(quadcontourset, pad=0.09, extend='max', shrink=0.5, aspect=5)
+        cbar = fig.colorbar(quadcontourset, pad=0.09, shrink=0.5, aspect=5)
         cbar.set_label("Konfidenz einer ok-Bewertung der KI", rotation=270, labelpad=10.0, fontsize=11)
 
         fig.suptitle(self._title, fontsize=14)

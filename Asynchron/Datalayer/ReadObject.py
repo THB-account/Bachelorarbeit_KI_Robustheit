@@ -118,6 +118,8 @@ class AudioLoadDO:
                                          f" andere Anzahl von Labeln als die Referenzdatei {labelCountRef}.")
 
             it.close()
+            if dirs[direct] == {}:
+                raise ValueError("Im Directory {direct} sind keine erkennbaren WAVE-Dateien.")
 
         return dirs
 

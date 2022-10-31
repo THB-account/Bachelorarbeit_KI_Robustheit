@@ -5,6 +5,8 @@ import GrpcKommunikation.logging_collector_pb2 as pb2_log
 import GrpcKommunikation.logging_collector_pb2_grpc as logging_collector_pb2_grpc
 # logging, so that error messages dont mess with application
 import logging
+from os import mkdir
+from os.path import exists
 # utils used for creating message envelope
 from utils import interpretResult
 
@@ -33,7 +35,9 @@ class ClassificationManager(classifications_manager_pb2_grpc.ClassificationsMana
                 # process job and send to application
                 yield job
             else:
-
+                # prevent FileNotFoundError
+                if not exists("./logs"):
+                    mkdir("./logs")
                 logging.error(f"unexpected value in ClassificationManager.jobs: {request}")
 
 
@@ -51,10 +55,6 @@ class ClassificationManager(classifications_manager_pb2_grpc.ClassificationsMana
                 pull = pb2.OutcomeUpstream(pullOutcome=pb2.PullOutcome())
                 yield pull
             elif request.HasField("pushOutcome"):
-
-                #with open("classResult.txt", 'a') as stream:
-                #    stream.write("\n" + str([[x.number.value for x in request.pushOutcome.outcome.jobMetadata.properties]
-                #                            , interpretResult(request.pushOutcome.outcome.predictions)]))
                 # push result of request into queue for application
                 index = [x.number.value-1 for x in request.pushOutcome.outcome.jobMetadata.properties]
                 confidence = interpretResult([(prediction.confidence, prediction.result, prediction.pointOfInterestOffsetNano)
@@ -66,6 +66,9 @@ class ClassificationManager(classifications_manager_pb2_grpc.ClassificationsMana
                 pull = pb2.OutcomeUpstream(pullOutcome=pb2.PullOutcome())
                 yield pull
             else:
+                # prevent FileNotFoundError
+                if not exists("./logs"):
+                    mkdir("./logs")
                 logging.error(f"unexpected value in ClassificationManager.outcomes: {request}")
 
     def list(self, request_iterator, context):
@@ -97,4 +100,7 @@ class LoggingCollector(logging_collector_pb2_grpc.LoggingCollector):
                 pullLogEvent.pullLogEvent.SetInParent()
                 yield pullLogEvent
             else:
-                logging.error(f"unexpected value in LoggingCollector.logs: {request}")
+                # prevent FileNotFoundError
+                if not exists("./logs"):
+                    mkdir("./logs")
+                logging.error(f"unexpected value in LoggingCollector.logs: {request}",)

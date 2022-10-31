@@ -51,7 +51,7 @@ class PipelineContainerVO:
         # check whether audio and noise samples have same sampling rate
         # while loading it is already checked that all samples have the same sampling rate
         for direct_noise in noiseAudio:
-            if list( list(baseAudio.values())[0] .values())[0]["audio"].samplingRate != \
+            if list( list(baseAudio.values())[0].values())[0]["audio"].samplingRate != \
                     list(noiseAudio[direct_noise].values())[0]["audio"].samplingRate:
                 raise ValueError(f"Das Störgeräusch {direct_noise} und die Steckaufnahmen haben unterschiedliche Sampling"
                                  " Raten.")
@@ -83,10 +83,10 @@ class PipelineContainerVO:
                 for uuid_noise, uuid_audio in product(noiseAudio[direct_noise], baseAudio[direct_audio]):
                     tempNoiseRate, tempNoiseAudio = noiseAudio[direct_noise][uuid_noise]["audio"].audio
                     noisePeakOffsets = noiseAudio[direct_noise][uuid_noise]["label"].labelOffsets  # peakOffsets is number in Nanoseconds
-                    noiseInjectionTO = self.findElement(lambda n: True if isinstance(n, NoiseInjectionVO) else False)
-                    noiseInjectionTO.noise = noiseAudio[direct_noise][uuid_noise]["audio"].extractAudiorange(
+                    noiseInjectionPE = self.findElement(lambda n: True if isinstance(n, NoiseInjectionVO) else False)
+                    noiseInjectionPE.noise = noiseAudio[direct_noise][uuid_noise]["audio"].extractAudiorange(
                         noisePeakOffsets[0], self.__intervalWidth)
-                    noiseInjectionTO.sr = tempNoiseRate
+                    noiseInjectionPE.sr = tempNoiseRate
 
 
                     # 2. Apply Pipeline
@@ -104,7 +104,7 @@ class PipelineContainerVO:
                                                              * normalizationValue/ \
                                                              (np.absolute(self.__PipelineHead.valueCache).max())
                         # set correlation for noise
-                        noiseInjectionTO.calcCorr(self.__PipelineHead.valueCache)
+                        noiseInjectionPE.calcCorr(self.__PipelineHead.valueCache)
                         # Accelerometerdaten für Verarbeitung
                         baseAcc = baseAudio[direct_audio][uuid_audio]["accelerometer"].\
                             extractAccrange(offset,self.__intervalWidth)
@@ -129,9 +129,7 @@ class PipelineContainerVO:
                             backgroundTasks.add(task)
                             task.add_done_callback(backgroundTasks.discard)
                             i += 1
-                            print(i)
                             if not self.__PipelineHead.increment():
-                                i=0
                                 await asyncio.gather(*backgroundTasks, return_exceptions=True)
                                 predictionSpace.add(predictionAr)
                                 pbar.update(1)
@@ -140,6 +138,8 @@ class PipelineContainerVO:
                 pbar.close()
 
             self.__evalCollection.add(predictionSpace.createAnalysis(self.__dataLayerInterface))
+            self.__dataLayerInterface.savePredictions(predictionSpace.container,
+                                      {"fname":f"{predictionSpace.name}\\predictions_{predictionSpace.name}"})
 
     def calcNormalization(self, files):
         """

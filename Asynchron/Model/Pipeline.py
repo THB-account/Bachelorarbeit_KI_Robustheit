@@ -264,7 +264,7 @@ class FrequencyAugmentationVO(PipelineElementVO):
 
     def __init__(self, nextPipeElement=None, useCache=False, valueRange=[1], dtype=np.int32):
         PipelineElementVO.__init__(self, nextPipeElement, useCache, dtype=dtype
-                                   , dimName="Frequenzfilterung für Anteile der Nyquistfrequenz")
+                                   , dimName="Frequenzfilterung für Anteile in Hz")
         # initialize Range
         self.__valueRange = valueRange
         self.__valueCounter = 0
@@ -278,21 +278,24 @@ class FrequencyAugmentationVO(PipelineElementVO):
             f1 = self.__valueRange[self.__valueCounter - 1]
             f2 = self.__valueRange[self.__valueCounter]
 
-            if f2 != f1 and f2 <= 1:
-                # Based on: https://www.dsprelated.com/showthread/comp.dsp/62286-1.php
-                # --> N*(1/FS) = 2/(fs - fp)  ; The factor at the beginning was just adapted
-                lenFilt = int(0.1 * int(sr / 2 * (f2 - f1)))
-                lenFilt |= 1
-                # if lower boundary is 0 use highpass, so everything until f2 is blocked
-                if f1==0:
-                    filWin = firwin(lenFilt, f2, pass_zero="highpass")
-                elif f2==1:
-                    filWin = firwin(lenFilt, f1, pass_zero="lowpass")
-                else:
-                    filWin = firwin(lenFilt, [f1, f2], pass_zero="bandstop")
-                result = lfilter(filWin, 1, element)
+
+            # Based on: https://www.dsprelated.com/showthread/comp.dsp/62286-1.php
+            # --> N*(1/FS) = 2/(fs - fp)  ; The factor at the beginning was just adapted
+            lenFilt = int(0.1 * int(sr / 2 * (f2 - f1)))
+            lenFilt |= 1
+            # if lower boundary is 0 use highpass, so everything until f2 is blocked
+            if f1==0.0 and f2==1.0:
+                filt1 = 1/(sr/2)
+                lenFilt = int(0.1 * int(sr / 2))
+                filWin = firwin(lenFilt, filt1, pass_zero="lowpass")
+            elif f1==0.0:
+                filWin = firwin(lenFilt, f2, pass_zero="highpass")
+            elif f2==1.0:
+                filWin = firwin(lenFilt, f1, pass_zero="lowpass")
             else:
-                result = element
+                filWin = firwin(lenFilt, [f1, f2], pass_zero="bandstop")
+            result = lfilter(filWin, 1, element)
+
         else:
             result = element
 
@@ -356,6 +359,7 @@ class NoiseInjectionVO(PipelineElementVO):
         self.noise = noise
         self.__sr = sr
         self.__corrShift = 0
+        self.__corrCache = None
         self.__normalization = normalization
 
     def process(self, element, sr):
@@ -366,11 +370,12 @@ class NoiseInjectionVO(PipelineElementVO):
         dtype = np.single
         if self.__normalization:
             # result = signal noise ratio * scaling value * shifted noise + signal
-            result = (rms(element.astype(dtype, copy=False))/rms(self.__noise.astype(dtype, copy=False))) \
-                     * float(self.__valueRange[self.__valueCounter]) * shift(self.__noise, self.__corrShift).astype(dtype) \
+
+            result = (element.astype(dtype, copy=False).max()/self.__noise.astype(dtype, copy=False).max()) \
+                     * float(self.__valueRange[self.__valueCounter]) * self.__corrCache.astype(dtype) \
                      + element.astype(dtype,copy=False)
         else:
-            result = float(self.__valueRange[self.__valueCounter]) * shift(self.__noise, self.__corrShift).astype(dtype) \
+            result = float(self.__valueRange[self.__valueCounter]) * self.__corrCache.astype(dtype) \
                      + element.astype(dtype,copy=False)
 
 
@@ -413,6 +418,7 @@ class NoiseInjectionVO(PipelineElementVO):
         cor = np.correlate(np.absolute(audio.astype(np.int64)), np.absolute(self.__noise).astype(np.int64), 'full')
         i = np.argmax(cor)
         self.__corrShift = i - int(len(cor) / 2)
+        self.__corrCache = shift(self.__noise, self.__corrShift)
 
     @property
     def valueRange(self):
