@@ -12,6 +12,9 @@ from utils import job_envelope
 # for managing execution order
 import asyncio
 
+# for saving data
+from numpy import array
+
 class PipelineContainerVO:
 
     def __init__(self, PipelineElements, outqueue, inqueue, normalization=False):
@@ -61,6 +64,7 @@ class PipelineContainerVO:
         localSamplingRate = list( list(baseAudio.values())[0] .values())[0]["audio"].samplingRate # sampling Rate for comparison
         numberOffsets = list( list(baseAudio.values())[0] .values())[0]["label"].numberOffsets # for calculating size of prediction space
         shape = self.__PipelineHead.shape
+
 
         # calculate normalization value
         if self.__normalization:
@@ -137,13 +141,31 @@ class PipelineContainerVO:
 
                 pbar.close()
 
+            # add names for finding out if certain outliers are continually caused by certain samples
+            names = [(
+                noiseAudio[direct_noise][uuid_n]["audio"].uuid,
+                b_obj["audio"].uuid
+            ) for uuid_n in noiseAudio[direct_noise] for b_obj in [*[*baseAudio.values()][0].values()]
+                      for i in range(numberOffsets) ]
+
+            dimensions = [self.__PipelineHead.getNames(),list(product(*self.__PipelineHead.getRanges()))]
+
+            # save Evaluation of Predictions to a Collection Object
             self.__evalCollection.add(predictionSpace.createAnalysis(self.__dataLayerInterface))
-            self.__dataLayerInterface.savePredictions(predictionSpace.container,
+            # save predictions and list of according files to disk
+            self.__dataLayerInterface.savePredictions(array([names,dimensions,predictionSpace.container],dtype='O'),
                                       {"fname":f"{predictionSpace.name}\\predictions_{predictionSpace.name}"})
+            #self.__dataLayerInterface.savePredictions(names,
+            #                          {"fname": f"{predictionSpace.name}\\predictions_uuids_{predictionSpace.name}"})
+            #self.__dataLayerInterface.savePredictions(dimensions,
+            #                          {"fname": f"{predictionSpace.name}\\predictions_dims_{predictionSpace.name}"})
+
+            names = None
+            dimensions = None
 
     def calcNormalization(self, files):
         """
-        :param files: directory with uuids of files. which consist of "audio", "label", "accelerometer"
+        :param files: directory with uuids of files. which consist of "audio", "label", "accelerometer"<ö
         :return: integer value defining the maximum value to which every audio should be normalized
         """
         maximas = []

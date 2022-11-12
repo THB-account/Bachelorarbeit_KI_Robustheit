@@ -17,16 +17,13 @@ class DataWriteDO:
             tempPath += "\\{0}".format(direct)
             if not os.path.exists(tempPath):
                 os.mkdir(tempPath)
-
+    # for saving multidimensional array containing prediction data, dimensions and names
     def savePredictions(self,predictions,config):
         if not os.path.exists(Datalayer.DatalayerInterface.pathEvalData):
             os.mkdir(Datalayer.DatalayerInterface.pathEvalData)
         self.__createDirectories(config["fname"])
         config["fname"] = "\\".join([Datalayer.DatalayerInterface.pathEvalData, config["fname"]])
-        save(config["fname"],predictions, allow_pickle=False)
-
-
-
+        save(config["fname"],predictions, allow_pickle=True)
 
     # for saving visualizations at the end of calculations
     def saveFigure(self, figure, config):

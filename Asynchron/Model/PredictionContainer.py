@@ -283,6 +283,7 @@ class EvaluationSpaceVO:
         colors += ["white"]
         self.__cmaps["hot"] = LinearSegmentedColormap.from_list('hot', colors, N=256)
         self.__cmaps["ihot"] = LinearSegmentedColormap.from_list('ihot', list(reversed(colors)), N=256)
+        # color used for plotting
         self.__color = self.__cmaps["ihot"]
 
         title = "Konfidenz einer ok-Bewertung"

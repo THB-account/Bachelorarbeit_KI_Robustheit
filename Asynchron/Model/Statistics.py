@@ -82,6 +82,10 @@ class BaseStatVO(StatNumberVO):
         ax.set_xlabel(axisNames[0], wrap=True, fontsize=12)
         ax.set_ylabel(axisNames[1], wrap=True, fontsize=12)
         ax.set_zlabel(axisNames[2], wrap=True, fontsize=12)
+        ax.w_xaxis.set_pane_color((0, 0, 0, 0.2))
+        ax.w_yaxis.set_pane_color((0, 0, 0, 0.2))
+        ax.w_zaxis.set_pane_color((0, 0, 0, 0.2))
+
         cbar = fig.colorbar(img, pad=0.09, shrink=0.5, aspect=5)
         # set ticks again so all ticks will be displayed
         cbarTicks = cbar.get_ticks()
@@ -134,6 +138,10 @@ class BasePitchStatVO(StatNumberVO):
             ax.set_xlabel(axisNames[0], wrap=True, fontsize=12)
             ax.set_ylabel(axisNames[1], wrap=True, fontsize=12)
             ax.set_zlabel(axisNames[2], wrap=True, fontsize=12)
+            ax.w_xaxis.set_pane_color((0, 0, 0, 0.2))
+            ax.w_yaxis.set_pane_color((0, 0, 0, 0.2))
+            ax.w_zaxis.set_pane_color((0, 0, 0, 0.2))
+
             cbar = fig.colorbar(img, pad=0.09, shrink=0.5, aspect=5)
             # set ticks again so all ticks will be displayed
             cbarTicks = cbar.get_ticks()
