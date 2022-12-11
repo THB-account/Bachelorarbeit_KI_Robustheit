@@ -186,11 +186,12 @@ class StartElementVO(PipelineElementVO):
 class PitchShiftVO(PipelineElementVO):
 
     # valueRange should be interpreted as Percents ; internally they
-    def __init__(self, nextPipeElement=None, useCache=False, valueRange=[0], dtype=np.int32):
+    def __init__(self, nextPipeElement=None, useCache=False, valueRange=[0], bins=70, dtype=np.int32):
         PipelineElementVO.__init__(self, nextPipeElement, useCache, dtype=dtype, dimName="PitchShift in %")
         # initialize Range
         self.__valueRange = valueRange
         self.__valueCounter = 0
+        self.__bins_per_octave = bins
 
     def process(self, element, sr):
         if self._useCache and self._valueCache is not None:
@@ -203,10 +204,10 @@ class PitchShiftVO(PipelineElementVO):
         if self.__valueRange[self.__valueCounter] != 0:
             if element.dtype != np.single:
                 result = pitch_shift(element.astype(np.single), sr=sr, n_steps=self.__valueRange[self.__valueCounter],
-                                     bins_per_octave=69)
+                                     bins_per_octave=self.__bins_per_octave)
             else:
                 result = pitch_shift(element, sr=sr, n_steps=self.__valueRange[self.__valueCounter],
-                                     bins_per_octave=69)
+                                     bins_per_octave=self.__bins_per_octave)
 
             result = result.astype(self._dtype)
         else: # if no shifting needed, skip the function call
@@ -239,7 +240,7 @@ class PitchShiftVO(PipelineElementVO):
         self.__valueCounter = 0
 
     def getRange(self):
-        return self.__valueRange.copy()
+        return self.__valueRange.copy()* (2**(1/self.__bins_per_octave)-1)
 
     @property
     def valueRange(self):
@@ -248,6 +249,10 @@ class PitchShiftVO(PipelineElementVO):
     @property
     def actualValue(self):
         return self.__valueRange[self.__valueCounter]
+
+    @property
+    def bins(self):
+        return self.__bins_per_octave
 
     @valueRange.setter
     def valueRange(self, valueRange):
@@ -356,7 +361,7 @@ class NoiseInjectionVO(PipelineElementVO):
         # initialize Range
         self.__valueRange = valueRange
         self.__valueCounter = 0
-        self.noise = noise
+        self.__noise = noise
         self.__sr = sr
         self.__corrShift = 0
         self.__corrCache = None

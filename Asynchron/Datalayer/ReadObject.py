@@ -38,12 +38,13 @@ class AudioLoadDO:
         #       /NoiseAudio/Fileclass1/ Audio Files, Labels etc.
         # Dies ist für den Fall, dass es keine Dateiklassen gibt, so dass die Dateien einfach abgelegt werden
         if not dirs:
-            dirs["\\"] = {}
+            dirs[""] = {}
 
         for direct in dirs:  # for Fileclass_n
             it = os.scandir("{0}\\{1}".format(pathToDir,
                                               direct))  # opens a stream/iterator which has to be closed ; This is faster than os.listdir
-            # for audiofiles ; it is the basis of the analysis
+            # for audiofiles ; it is the basis of the analysis so they are center of analysis
+            # audiofile is just a file of a directory, not the name of an audiofile, unless it ends with .wav
             for audiofile in it:
                 if audiofile.name.endswith(".wav"): # if file exists
                     file_found = False # control variable to check for labels
@@ -119,7 +120,7 @@ class AudioLoadDO:
 
             it.close()
             if dirs[direct] == {}:
-                raise ValueError("Im Directory {direct} sind keine erkennbaren WAVE-Dateien.")
+                raise ValueError(f"Im Directory {direct} sind keine erkennbaren WAVE-Dateien.")
 
         return dirs
 

@@ -155,10 +155,6 @@ class PipelineContainerVO:
             # save predictions and list of according files to disk
             self.__dataLayerInterface.savePredictions(array([names,dimensions,predictionSpace.container],dtype='O'),
                                       {"fname":f"{predictionSpace.name}\\predictions_{predictionSpace.name}"})
-            #self.__dataLayerInterface.savePredictions(names,
-            #                          {"fname": f"{predictionSpace.name}\\predictions_uuids_{predictionSpace.name}"})
-            #self.__dataLayerInterface.savePredictions(dimensions,
-            #                          {"fname": f"{predictionSpace.name}\\predictions_dims_{predictionSpace.name}"})
 
             names = None
             dimensions = None

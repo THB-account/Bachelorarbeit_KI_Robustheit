@@ -149,8 +149,9 @@ class BasePitchStatVO(StatNumberVO):
 
             #cbar.set_ticks(append(cbar.get_ticks(), [self._value.max()]))
             cbar.set_label("Konfidenz einer ok-Bewertung der KI", fontsize=11)
-            figs.append(fig)
-        return figs
+            #figs.append(fig)
+            yield fig
+        #return figs
 
     def saveFig(self):
         # with Path can directories be created
