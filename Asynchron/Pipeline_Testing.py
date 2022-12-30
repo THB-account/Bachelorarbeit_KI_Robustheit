@@ -8,7 +8,7 @@ from Datalayer.Datalayer import *
 from utils import fft_display
 
 comp_result_pipe = False
-run_calc = True
+run_calc = False
 comp_result_elements = False
 
 if __name__=="__main__":
@@ -41,7 +41,7 @@ if __name__=="__main__":
     pEl = [
         StartElementVO(None, None),
         FrequencyAugmentationVO(None, useCache=useCache, valueRange=np.arange(5) / 5),
-        PitchShiftVO(None, useCache=useCache, valueRange=[-6,0,6]),
+        PitchShiftVO(None, useCache=useCache, valueRange=[-2,-1,0,1,2],bins=70),
         NoiseInjectionVO(None, useCache=False, valueRange=np.arange(4)/3, noise=None, sr=None)
     ]
 
@@ -51,15 +51,15 @@ if __name__=="__main__":
 
     # Sezten der restlichen Werte
     pEl[0].samplingRate = 44100
-    pEl[0].valueCache = baseSample.audio[1][3*pEl[0].samplingRate: 5*pEl[0].samplingRate]
+    pEl[0].valueCache = baseSample.extractAudiorange(1*10**9,2)
     pEl[3].sr = 44100
-    pEl[3].noise = noiseSample.audio[1][3*pEl[0].samplingRate: 5*pEl[0].samplingRate]
+    pEl[3].noise = noiseSample.extractAudiorange(1*10**9,2)
 
 
 
     # Übergabe an Container, welche diese zu einer Pipeline verbindet
     # Pipelinecontainer
-    pCont= PipelineContainerVO(pEl)
+    pCont= PipelineContainerVO(pEl,None,None)
 
     print("Verbindung der Elemente")
     for x in pEl:

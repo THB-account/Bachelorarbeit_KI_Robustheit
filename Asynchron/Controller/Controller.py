@@ -41,40 +41,42 @@ class PipelineController:
         if not exists("config.yaml"):
             with open("config.yaml",'w') as stream:
                 stream.write("""
-# Wenn die Aufnahmen im Ordner "Basisgerausche" auf deren durchschnittliches Maximum normalisiert werden sollen auf True
-# setzen, ansonsten auf False setzen
+# Wenn die Aufnahmen im Ordner "Basisgerausche" auf deren durchschnittliches Maximum normalisiert werden sollen, auf True
+# setzen, ansonsten auf False.
 basisaudioNormalisierung : False
 
-# Wenn die Störgeräusche im Ordner "Stoergerauschen" im Verhältnis zum Basisgerausch normalisiert werden sollen auf True
-# setzen, ansonsten auf False setzen
-# Berechnungsformel: verarbeitetes Signal = RMS(Basisgerausch)/RMS(Noise) * Noise * stellwert[i] + Basisgerausch
-# wobei Signal Noise Ratio = RMS(Basisgerausch)/RMS(Noise)
-# durch RMS(Basisgerausch)/RMS(Noise) * Noise ist Noise auf die Energie des Signals normalisiert 
+# Wenn die Störgeräusche im Ordner "Stoergerausche" im Verhältnis zum Basisgerausch normalisiert werden sollen auf True
+# setzen, ansonsten auf False.
+# Berechnungsformel: verarbeitetes Signal = Max(Basisgerausch)/Max(Noise) * Noise * stellwert[i] + Basisgerausch 
 noiseNormalisierung : False
 
                 
-# Shifted den Frequenzbereich um n% nach Rechts
-# muss 0 als Wert enthalten für Fehlerberechnung
-#pitchshiftProzente : "[-1,0,1]"
-
+# Shifted den Frequenzbereich um pitchshiftSchrittweite% in den hoch- oder niedrigfrequenten.
+# Der Wert 0 würde dazu führen, dass die Modifikationsdimension nicht berücksichtig wird und
+# die Stellwerteliste 0 erstellt wird.
 pitchshiftSchrittweite: 0.1
-pitchshiftSchritte: 10
 
+# Der Wert 3 würde zur Erstellung der Liste von Verschiebungsstufen [-3,-2,-1,0,1,2,3] führen. Die Schrittweite ist 1.
+# Der Wert 0 würde dazu führen, dass die Modifikationsdimension nicht berücksichtig wird und
+# die Stellwerteliste 0 erstellt wird.
+pitchshiftSchritte: 10
 
 
 # Anzahl der Abschnitte für das Entfernen von Frequenzanteilen
 # 5 würde in [0,0.2,0.4,0.6,0.8,1] resultieren, wobei ein Intervall und der
-# nächsthöheren Nummer besteht e.g. (0-0.2),(0.2-0.4)...(0.8-1)
-# 0 ist ein valider Wert und diese Dimension wird in der Modifikation von Aufnahmen nicht berücksichtigt
+# nächsttieferen Nummer besteht e.g. (0,0) (0-0.2),(0.2-0.4)...(0.8-1). Die Schrittweite ist 1/n.
+# 0 ist ein valider Wert und würde dazu führen, dass diese Dimension in der Modifikation von Aufnahmen 
+# nicht berücksichtigt wird. Die entsprechende Liste wäre [0].
 frequenzSchritte : 5
 
-# noiseSchritte ist die Anzahl der Elemente in dem Modifikationsarray
+# noiseSchritte ist die Anzahl der Elemente in dem Modifikationsarray.
 # 5 würde [0,0.2,0.4,0.6,0.8,1] entsprechen --> Schrittweite: 1/n
-# 0 ist ein valider Wert und diese Dimension wird in der Modifikation von Aufnahmen nicht berücksichtigt
+# 0 ist ein valider Wert, wodurch diese Dimension nicht in der Modifikation von Aufnahmen berücksichtigt wird.
 noiseSchritte : 5
-# Wie Stark das letztendlich überlagerte Geräusch am Ende sein soll
-# entspricht dem finalen Element der Liste --> [0,0.2,...,2]
-# 0 ist ein valider Wert und diese Dimension wird in der Modifikation von Aufnahmen nicht berücksichtigt
+# noiseAmplitude bestimmt wie stark das letztendlich überlagerte Geräusch am Ende sein soll.
+# noiseAmplitude entspricht dem finalen Element der Liste --> [0,0.2,...,2] und bestimmt die Schrittweite
+# in Form von noiseAmplitude/noiseSchritte.
+# 0 ist ein valider Wert, wodurch diese Dimension nicht in der Modifikation von Aufnahmen berücksichtigt wird.
 noiseAmplitude : 1
 
                 """)
@@ -144,7 +146,7 @@ noiseAmplitude : 1
             else:
                 bins = floor(log(2,1+confData["pitchshiftSchrittweite"]/100))
         else:
-            pitchshiftKeys = arange(0) # arange to create np.array without importing, functionality used later on
+            pitchshiftKeys = arange(1) # arange to create np.array without importing, functionality used later on
             # due to bins not needing to be set i use the standard value, which is equal to 0.1 % percent per octave
             bins = 70
 

@@ -1,4 +1,6 @@
 """
+Date: 29.11.2022
+Autor: Jonas Engler
 Pipelinetest
 
 Was soll mit diesem Test erreicht werden?
@@ -28,7 +30,7 @@ normalization = False
 freq = 8
 noise = 10
 frequencyCutouts = np.arange(freq+1)/(freq if freq!= 0 else 1) # [0,0.2,0.4,0.6,0.8,1]
-pitchshiftPercents=[-1,0,1]
+pitchshiftPercents=[-10,-5,0]
 noisePercents =  np.arange(noise+1)/(noise if noise!= 0 else 1) # [0,0.2,0.4,0.6,0.8,1]
 
 # Load Audio extracted Audio
@@ -51,14 +53,14 @@ noiseAudio = noiseAudio["audio"].extractAudiorange(noiseAudio["label"].labelOffs
 if dummyAudio:
     t = np.linspace(0,2,2*sr)
     f = 1000
-    baseAudio = np.sin(t*2*np.pi*f)
+    baseAudio = 20000*np.sin(t*2*np.pi*f)
 
 
 pEl = [
             Model.Pipeline.StartElementVO(baseElement=None, nextPipeElement=None), # standard dtype np.single=float
             Model.Pipeline.FrequencyAugmentationVO(nextPipeElement=None, useCache=True,
                                     valueRange=frequencyCutouts),
-            Model.Pipeline.PitchShiftVO(nextPipeElement=None, useCache=True, valueRange=pitchshiftPercents),
+            Model.Pipeline.PitchShiftVO(nextPipeElement=None, useCache=True, valueRange=pitchshiftPercents,bins=70),
             Model.Pipeline.NoiseInjectionVO(nextPipeElement=None, useCache=False,
                              valueRange=noisePercents,
                              noise=None, sr=None, normalization=normalization),
@@ -120,7 +122,7 @@ plt.close(fig2)
 
 # --------------------------------------------------------------------------------------------------------------------
 # plot modified Audio for pipeline segments
-for pipePiece in pEl[2:2]:
+for pipePiece in pEl[2:3]:
     temp = []
     for _ in range(len(pipePiece.valueRange)):
         modAudio = pipePiece.process(baseAudio,sr)
@@ -152,7 +154,8 @@ for pipePiece in pEl[2:2]:
 # check whether casting of elements work
 tempAudio = baseAudio.astype(np.int32)
 if tempAudio.max() <= 32767:
-    tempAudio = tempAudio * 32767 / tempAudio.max() * 2
+    # tempAudio * (factor_to_stretch to 32767) * 2
+    tempAudio = tempAudio * (32767 / tempAudio.max()) * 2
 
 
 fig = plt.figure()
